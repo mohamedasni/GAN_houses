@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets("MNIST_data/")
 
-print(mnist.train.next_batch(batch_size)[0])
-
 # Commented out code to visualize the mnist dataset
 
 # sample = mnist.train.next_batch(1)
@@ -99,89 +97,106 @@ def generator(z, batch_size, z_dim, reuse=False):
     # Dimensions of g4: batch_size x 28 x 28 x 1
     return g4
 
-tf.reset_default_graph()
-batch_size =100
-z_dimension = 100
+# Uncomment to view the generator generate images
 
-z_placeholder = tf.placeholder(tf.float32,[None,z_dimension],name='z_placeholder')
-x_placeholder = tf.placeholder(tf.float32,[None,28,28,1],name='x_placeholder')
+batch_size = 100
+z_dimensions = 100
+z_placeholder = tf.placeholder(tf.float32, [None, z_dimensions])
 
-with tf.variable_scope(tf.get_variable_scope()):
-    Gz = generator(z_placeholder, batch_size, z_dimension)
-    # Gz holds the generated images
+generated_image_output = generator(z_placeholder, 1, z_dimensions)
+z_batch = np.random.normal(0, 1, [1, z_dimensions])
 
-    Dx = discriminator(x_placeholder)
-    # Dx will hold discriminator prediction probabilities
-    # for the real MNIST images
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    generated_image = sess.run(generated_image_output,
+                                feed_dict={z_placeholder: z_batch})
+    generated_image = generated_image.reshape([28, 28])
+    plt.imshow(generated_image, cmap='Greys')
+    plt.show()
 
-    Dg = discriminator(Gz, reuse=True)
-
-d_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(Dx),logits=Dx))
-d_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.zeros_like(Dg),logits=Dg))
-g_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(Dg),logits=Dg))
-
-tvars = tf.trainable_variables()
-d_vars = [var for var in tvars if 'd_' in var.name]
-g_vars = [var for var in tvars if 'g_' in var.name]
-
-print ([v.name for v in d_vars])
-print ([v.name for v in g_vars])
-
-with tf.variable_scope(tf.get_variable_scope()):
-    # Train the discriminator
-    d_trainer_fake = tf.train.AdamOptimizer(0.0003).minimize(d_loss_fake, var_list=d_vars)
-    d_trainer_real = tf.train.AdamOptimizer(0.0003).minimize(d_loss_real, var_list=d_vars)
-
-    # Train the generator
-    g_trainer = tf.train.AdamOptimizer(0.0001).minimize(g_loss, var_list=g_vars)
-
-tf.summary.scalar('Discriminator_loss_real',d_loss_real)
-tf.summary.scalar('Discriminator_loss_fake',d_loss_fake)
-tf.summary.scalar('Generator_loss',g_loss)
-
-sess = tf.Session()
-sess.run(tf.global_variables_initializer())
-
-with tf.variable_scope(tf.get_variable_scope()) as scope:
-    images_for_tensorboard = generator(z_placeholder, batch_size, z_dimension,reuse=True)
-    tf.summary.image('Generated_images', images_for_tensorboard, 5)
-    merged = tf.summary.merge_all()
-    logdir = 'Tensorboard/' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + '/'
-    writer = tf.summary.FileWriter(logdir,sess.graph)
-
-#Pre-train discriminator
-for i in range(3000):
-    z_batch = np.random.normal(0, 1, size=[batch_size,z_dimension])
-    real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size,28,28,1])
-    _,__,dLossReal,dLossFake = sess.run([d_trainer_real,d_trainer_fake,d_loss_real,d_loss_fake],
-                                       feed_dict={x_placeholder:real_image_batch,z_placeholder:z_batch})
-    if(i%100==0):
-        print ('dLossReal: ',dLossReal,'dLossFake: ',dLossFake)
-
-#Train discriminator and generator together
-for i in range(100000):
-    real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size,28,28,1])
-    z_batch = np.random.normal(0,1,size=[batch_size,z_dimension])
-
-    _,__,dLossReal,dLossFake = sess.run([d_trainer_real,d_trainer_fake,d_loss_real,d_loss_fake],
-                                        feed_dict={x_placeholder:real_image_batch,z_placeholder:z_batch})
-    z_batch = np.random.normal(0,1,size=[batch_size,z_dimension])
-    _ = sess.run(g_trainer,feed_dict={z_placeholder:z_batch})
-
-    if i%10 ==0:
-        z_batch = np.random.normal(0,1,size=[batch_size,z_dimension])
-        summary = sess.run(merged,feed_dict={x_placeholder:real_image_batch,z_placeholder:z_batch})
-        writer.add_summary(summary,i)
-
-    if i%100==0:
-        print ('Iteration:',i,'at',datetime.datetime.now())
-        z_batch = np.random.normal(0,1,size=[batch_size,z_dimension])
-        generated_image = generator(z_placeholder,1,z_dimension, reuse=True)
-        images = sess.run(generated_image,feed_dict={z_placeholder:z_batch})
-        # plt.imshow(images[0].reshape([28,28]),cmap='Greys')
-        # plt.savefig('Generated_images/'+str(i)+'.jpg')
-
-        img = images[0].reshape([1,28,28,1])
-        result = discriminator(x_placeholder)
-        estimate = sess.run(result,feed_dict={x_placeholder:img})
-        print ('Estimate:',estimate)
+# tf.reset_default_graph()
+# batch_size =100
+# z_dimension = 100
+#
+# z_placeholder = tf.placeholder(tf.float32,[None,z_dimension],name='z_placeholder')
+# x_placeholder = tf.placeholder(tf.float32,[None,28,28,1],name='x_placeholder')
+#
+# with tf.variable_scope(tf.get_variable_scope()):
+#     Gz = generator(z_placeholder, batch_size, z_dimension)
+#     # Gz holds the generated images
+#
+#     Dx = discriminator(x_placeholder)
+#     # Dx will hold discriminator prediction probabilities
+#     # for the real MNIST images
+#
+#     Dg = discriminator(Gz, reuse=True)
+#
+# d_loss_real = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(Dx),logits=Dx))
+# d_loss_fake = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.zeros_like(Dg),logits=Dg))
+# g_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.ones_like(Dg),logits=Dg))
+#
+# tvars = tf.trainable_variables()
+# d_vars = [var for var in tvars if 'd_' in var.name]
+# g_vars = [var for var in tvars if 'g_' in var.name]
+#
+# print ([v.name for v in d_vars])
+# print ([v.name for v in g_vars])
+#
+# with tf.variable_scope(tf.get_variable_scope()):
+#     # Train the discriminator
+#     d_trainer_fake = tf.train.AdamOptimizer(0.0003).minimize(d_loss_fake, var_list=d_vars)
+#     d_trainer_real = tf.train.AdamOptimizer(0.0003).minimize(d_loss_real, var_list=d_vars)
+#
+#     # Train the generator
+#     g_trainer = tf.train.AdamOptimizer(0.0001).minimize(g_loss, var_list=g_vars)
+#
+# tf.summary.scalar('Discriminator_loss_real',d_loss_real)
+# tf.summary.scalar('Discriminator_loss_fake',d_loss_fake)
+# tf.summary.scalar('Generator_loss',g_loss)
+#
+# sess = tf.Session()
+# sess.run(tf.global_variables_initializer())
+#
+# with tf.variable_scope(tf.get_variable_scope()) as scope:
+#     images_for_tensorboard = generator(z_placeholder, batch_size, z_dimension,reuse=True)
+#     tf.summary.image('Generated_images', images_for_tensorboard, 5)
+#     merged = tf.summary.merge_all()
+#     logdir = 'Tensorboard/' + datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + '/'
+#     writer = tf.summary.FileWriter(logdir,sess.graph)
+#
+# #Pre-train discriminator
+# for i in range(3000):
+#     z_batch = np.random.normal(0, 1, size=[batch_size,z_dimension])
+#     real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size,28,28,1])
+#     _,__,dLossReal,dLossFake = sess.run([d_trainer_real,d_trainer_fake,d_loss_real,d_loss_fake],
+#                                        feed_dict={x_placeholder:real_image_batch,z_placeholder:z_batch})
+#     if(i%100==0):
+#         print ('dLossReal: ',dLossReal,'dLossFake: ',dLossFake)
+#
+# #Train discriminator and generator together
+# for i in range(100000):
+#     real_image_batch = mnist.train.next_batch(batch_size)[0].reshape([batch_size,28,28,1])
+#     z_batch = np.random.normal(0,1,size=[batch_size,z_dimension])
+#
+#     _,__,dLossReal,dLossFake = sess.run([d_trainer_real,d_trainer_fake,d_loss_real,d_loss_fake],
+#                                         feed_dict={x_placeholder:real_image_batch,z_placeholder:z_batch})
+#     z_batch = np.random.normal(0,1,size=[batch_size,z_dimension])
+#     _ = sess.run(g_trainer,feed_dict={z_placeholder:z_batch})
+#
+#     if i%10 ==0:
+#         z_batch = np.random.normal(0,1,size=[batch_size,z_dimension])
+#         summary = sess.run(merged,feed_dict={x_placeholder:real_image_batch,z_placeholder:z_batch})
+#         writer.add_summary(summary,i)
+#
+#     if i%100==0:
+#         print ('Iteration:',i,'at',datetime.datetime.now())
+#         z_batch = np.random.normal(0,1,size=[batch_size,z_dimension])
+#         generated_image = generator(z_placeholder,1,z_dimension, reuse=True)
+#         images = sess.run(generated_image,feed_dict={z_placeholder:z_batch})
+#         # plt.imshow(images[0].reshape([28,28]),cmap='Greys')
+#         # plt.savefig('Generated_images/'+str(i)+'.jpg')
+#
+#         img = images[0].reshape([1,28,28,1])
+#         result = discriminator(x_placeholder)
+#         estimate = sess.run(result,feed_dict={x_placeholder:img})
+#         print ('Estimate:',estimate)
