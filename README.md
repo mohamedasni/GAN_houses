@@ -55,6 +55,6 @@ After that, you can run the script using the same command:
 `python gan_houses_v2.py`
 
 ## How we ran these models
-We ran all the following models in the PyCharm IDE, we used a specialy crafter Anaconda environment. 
+We ran all the following models in the PyCharm IDE, we used a specialy crafted Anaconda environment. 
 We have also added the yml file that describes all the installed modules in our environment. Please refer to: 
 `tensorsimo.yml`
