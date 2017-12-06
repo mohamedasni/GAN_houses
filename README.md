@@ -30,6 +30,7 @@ You need a few different libraries to run all the models:
 * numpy
 * matplotlib
 * keras_adversarial
+* tensorboard (optional)
 
 To install keras_adversarial, please follow the directions at this location: https://github.com/bstriner/keras-adversarial
 
@@ -41,6 +42,14 @@ After that, you should be able to simply run the script like this:
 The model will then compile and train.
 
 ## How to run MNIST GAN
+
+If all the packages mentioned above have been correctly setup within your environments than running this model is pretty strainght forward.
+
+* `python gan.py` is all you need to do run it!
+
+To visualize the training while it is happening:
+
+* `tensorboard --logdir=Tensorboard`
 
 ## How to run GAN Houses V1
 To run the V1 House GAN, you need to already have ran the autoencoder because the autoencoder creates the proper training and validation files. After the files are there, you should be able to run the House GAN V1 like so:
@@ -55,6 +64,6 @@ After that, you can run the script using the same command:
 `python gan_houses_v2.py`
 
 ## How we ran these models
-We ran all the following models in the PyCharm IDE, we used a specialy crafted Anaconda environment. 
-We have also added the yml file that describes all the installed modules in our environment. Please refer to: 
+We ran all the following models in the PyCharm IDE, we used a specialy crafted Anaconda environment.
+We have also added the yml file that describes all the installed modules in our environment. Please refer to:
 `tensorsimo.yml`
