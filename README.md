@@ -10,10 +10,10 @@ Before attempting to create a GAN for houses and their features, we needed to tr
 
 Our first version of such a GAN did in fact work and did in fact generate houses. However, we were not satisfied with the results. After certain optimizations we developed our second version of our GAN. You can see our results in `./gan_houses_v2/result.txt` and `./gan_houses_v2/figure_1.png`.
 
-* Autoencoder: './autoencoder'
-* MNIST data GAN: `./gan_mnist`
-* Houses GAN version 1: `./gan_houses_v1`
-* Houses GAN version 2: `./gan_houses_v2`
+* Autoencoder: `./autoencoder/`
+* MNIST data GAN: `./gan_mnist/`
+* Houses GAN version 1: `./gan_houses_v1/`
+* Houses GAN version 2: `./gan_houses_v2/`
 
 ## Sources
 
