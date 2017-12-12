@@ -7,6 +7,12 @@ import matplotlib.pyplot as plt
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets("MNIST_data/")
 
+'''
+Note: For clarity purposes a certain notation consistancy was implemented.
+d_ : stands for discriminator specific variables
+g_ : stands for generator specific variables
+'''
+
 # Lets define our discriminator model
 def discriminator(images, reuse=False):
     # This will allow us to call the model more than once have it reuse variables
@@ -16,33 +22,50 @@ def discriminator(images, reuse=False):
 
     # First convolutional layers
     # This finds 32 different 5 x 5 pixel features
+    # Lets create our weight variable
     d_w1 = tf.get_variable('d_w1', [5, 5, 1, 32], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    # Lets create our bias variable
     d_b1 = tf.get_variable('d_b1', [32], initializer=tf.constant_initializer(0))
+    # Apply Tensorflow's standard convolution function
     d1 = tf.nn.conv2d(input=images, filter=d_w1, strides=[1, 1, 1, 1], padding='SAME')
+    # Add our bias
     d1 = d1 + d_b1
+    # Apply Relu activation function
     d1 = tf.nn.relu(d1)
     d1 = tf.nn.avg_pool(d1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
     # Second convolutional layers
     # This fidns 64 different 5 x 5 pixel features
+    # Lets create our weight variable
     d_w2 = tf.get_variable('d_w2', [5, 5, 32, 64], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    # Lets create our bias variable
     d_b2 = tf.get_variable('d_b2', [64], initializer=tf.constant_initializer(0))
+    # Apply Tensorflow's standard convolution function
     d2 = tf.nn.conv2d(input=d1, filter=d_w2, strides=[1, 1, 1, 1], padding='SAME')
+    # Add our bias
     d2 = d2 + d_b2
+    # Apply Relu activation function
     d2 = tf.nn.relu(d2)
     d2 = tf.nn.avg_pool(d2, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')
 
     # First fully connected layer
+    # Lets create our weight variable
     d_w3 = tf.get_variable('d_w3', [7 * 7 * 64, 1024], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    # Lets create our bias variable
     d_b3 = tf.get_variable('d_b3', [1024], initializer=tf.constant_initializer(0))
+    # Reshape our data/tensor
     d3 = tf.reshape(d2, [-1, 7 * 7 * 64])
-    d3 = tf.matmul(d3, d_w3)
-    d3 = d3 + d_b3
+    # Multiply values by the weights and add bias
+    d3 = tf.matmul(d3, d_w3) + d_b3
+    # Apply Relu activation function
     d3 = tf.nn.relu(d3)
 
     # Second fully connected layer
+    # Lets create our weight variable
     d_w4 = tf.get_variable('d_w4', [1024, 1], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    # Lets create our bias variable
     d_b4 = tf.get_variable('d_b4', [1], initializer=tf.constant_initializer(0))
+    # Multiply by weights and add bias
     d4 = tf.matmul(d3, d_w4) + d_b4
 
     return d4
@@ -53,24 +76,35 @@ def generator(z, batch_size, z_dim, reuse=False):
     if (reuse):
         tf.get_variable_scope().reuse_variables()
 
-
+    # Lets create our weight variable
     g_w1 = tf.get_variable('g_w1', [z_dim, 3136], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    # Lets create our bias variable
     g_b1 = tf.get_variable('g_b1', [3136], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    # Multiply and add bias
     g1 = tf.matmul(z, g_w1) + g_b1
+    # Reshape our data
     g1 = tf.reshape(g1, [-1, 56, 56, 1])
     g1 = tf.contrib.layers.batch_norm(g1, epsilon=1e-5, scope='bn1')
+    # Apply Relu activation function
     g1 = tf.nn.relu(g1)
 
+    # Lets create our weight variable
     g_w2 = tf.get_variable('g_w2', [3, 3, 1, z_dim/2], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    # Lets create our bias variable
     g_b2 = tf.get_variable('g_b2', [z_dim/2], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    # Apply Tensorflow's standard convolution function
     g2 = tf.nn.conv2d(g1, g_w2, strides=[1, 2, 2, 1], padding='SAME')
     g2 = g2 + g_b2
     g2 = tf.contrib.layers.batch_norm(g2, epsilon=1e-5, scope='bn2')
+    # Apply Relu activation function
     g2 = tf.nn.relu(g2)
     g2 = tf.image.resize_images(g2, [56, 56])
 
+    # Lets create our weight variable
     g_w3 = tf.get_variable('g_w3', [3, 3, z_dim/2, z_dim/4], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    # Lets create our bias variable
     g_b3 = tf.get_variable('g_b3', [z_dim/4], initializer=tf.truncated_normal_initializer(stddev=0.02))
+    # Apply Tensorflow's standard convolution function
     g3 = tf.nn.conv2d(g2, g_w3, strides=[1, 2, 2, 1], padding='SAME')
     g3 = g3 + g_b3
     g3 = tf.contrib.layers.batch_norm(g3, epsilon=1e-5, scope='bn3')
@@ -78,13 +112,15 @@ def generator(z, batch_size, z_dim, reuse=False):
     g3 = tf.image.resize_images(g3, [56, 56])
 
     # Final convolution with one output channel
+    # Lets create our weight variable
     g_w4 = tf.get_variable('g_w4', [1, 1, z_dim/4, 1], dtype=tf.float32, initializer=tf.truncated_normal_initializer(stddev=0.02))
+    # Lets create our bias variable
     g_b4 = tf.get_variable('g_b4', [1], initializer=tf.truncated_normal_initializer(stddev=0.02))
     g4 = tf.nn.conv2d(g3, g_w4, strides=[1, 2, 2, 1], padding='SAME')
     g4 = g4 + g_b4
+    # Apply sigmoid activation function
     g4 = tf.sigmoid(g4)
 
-    # Dimensions of g4: batch_size x 28 x 28 x 1
     return g4
 
 # reset tensorflow's default graph and lets start training this thing!
